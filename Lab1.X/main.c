@@ -34,14 +34,22 @@
 #define LEDr PORTEbits.RE0 
 #define LEDa PORTEbits.RE1 
 #define LEDv PORTEbits.RE2  //los leds
-#define BTNStart PORTBbits.RB0 //
+#define BTNStart PORTBbits.RB0 // botón Start
 
 
-#define _XTAL_FREQ 8000000 //Para que funcione el delay
+#define _XTAL_FREQ 8000000 //Para que funcione el delay -crystal-
 
+
+/// variables globales
+unsigned char bandera = 0;
+unsigned char conta,contb; 
+///////
 
 void setup(void);
 void semaforo(void);
+void player1(void);
+void player2(void);
+void reset(void);
 
 /*---
  * 1 Ciclo del semáforo
@@ -58,12 +66,117 @@ void semaforo(void){
     
     LEDa = 0;
     LEDv = 1;
-    __delay_ms(500); 
+    __delay_ms(1500); // un rato más largo el verde jiji
+    LEDv = 0; 
 }
 ///////
+void player1(void){
+    switch(conta){
+        case 0: PORTCbits.RC0 = 1 ; 
+        break;
+        case 1: PORTCbits.RC0 = 0 ; 
+        PORTCbits.RC1 = 1 ; 
+        break;
+        case 2: PORTCbits.RC1 = 0 ; 
+        PORTCbits.RC2 = 1 ;  
+        break;
+        case 3: PORTCbits.RC2 = 0 ; 
+        PORTCbits.RC3 = 1 ; 
+        break;
+        case 4: PORTCbits.RC3 = 0 ; 
+        PORTCbits.RC4 = 1 ; 
+        break;
+        case 5: PORTCbits.RC4 = 0 ; 
+        PORTCbits.RC5 = 1 ; 
+        break;
+        case 6: PORTCbits.RC5 = 0 ;  
+        PORTCbits.RC6 = 1 ; 
+        break;  
+        case 7: PORTCbits.RC7 = 0 ;  
+        PORTAbits.RA0 = 1 ;
+        PORTCbits.RC1 = 1 ;
+        PORTCbits.RC2 = 1 ;
+        PORTCbits.RC3 = 1 ;
+        PORTCbits.RC4 = 1 ;
+        PORTCbits.RC5 = 1 ;
+        PORTCbits.RC6 = 1 ;
+        PORTCbits.RC7 = 1 ;
+        break;        
+    }
+}
 
-/// variables globales
-unsigned char bandera = 0;
+void player2(void){
+    switch(contb){
+        case 0: PORTDbits.RD0 = 1 ; 
+        break;
+        case 1: PORTDbits.RD0 = 0 ; 
+        PORTDbits.RD1 = 1 ; 
+        break;
+        case 2: PORTDbits.RD1 = 0 ; 
+        PORTDbits.RD2 = 1 ;  
+        break;
+        case 3: PORTDbits.RD2 = 0 ; 
+        PORTDbits.RD3 = 1 ; 
+        break;
+        case 4: PORTDbits.RD3 = 0 ; 
+        PORTDbits.RD4 = 1 ; 
+        break;
+        case 5: PORTDbits.RD4 = 0 ; 
+        PORTDbits.RD5 = 1 ; 
+        break;
+        case 6: PORTDbits.RD5 = 0 ;  
+        PORTDbits.RD6 = 1 ; 
+        break;  
+        case 7: PORTDbits.RD7 = 0 ; 
+        PORTAbits.RA1 = 1 ;
+        PORTDbits.RD1 = 1 ;
+        PORTDbits.RD2 = 1 ;
+        PORTDbits.RD3 = 1 ;
+        PORTDbits.RD4 = 1 ;
+        PORTDbits.RD5 = 1 ;
+        PORTDbits.RD6 = 1 ;
+        PORTDbits.RD7 = 1 ; 
+        break;        
+    }
+}
+
+void reset(void){ //resetea el juego
+    conta = contb = 0 ;
+    
+    PORTAbits.RA0 = 0 ;
+    PORTAbits.RA1 = 0 ; 
+    
+    PORTCbits.RC1 = 0 ;
+    PORTCbits.RC2 = 0 ;
+    PORTCbits.RC3 = 0 ;
+    PORTCbits.RC4 = 0 ;
+    PORTCbits.RC5 = 0 ;
+    PORTCbits.RC6 = 0 ;
+    PORTCbits.RC7 = 0 ; 
+    
+    PORTDbits.RD1 = 0 ;
+    PORTDbits.RD2 = 0 ;
+    PORTDbits.RD3 = 0 ;
+    PORTDbits.RD4 = 0 ;
+    PORTDbits.RD5 = 0 ;
+    PORTDbits.RD6 = 0 ;
+    PORTDbits.RD7 = 0 ;
+        
+}
+
+
+void carrera(void){ //suma al contador
+    
+    if (PORTBbits.RB1 == 0 || PORTBbits.RB2 == 0){
+        if (PORTBbits.RB1 == 0 && PORTBbits.RB2 != 0) conta++;
+        else if (PORTBbits.RB1 != 0 && PORTBbits.RB2 == 0) contb++;
+        else { //por si hacen click a los botones en simultáneo
+            conta++;
+            contb++;
+        }
+    }
+    if (conta == 7 || contb == 7) bandera = 0; //finaliza la carrera
+}
 
 /////
 void main(void) {
@@ -72,9 +185,15 @@ void main(void) {
     while(1){
         if (BTNStart == 0){
             semaforo();
-           // bandera = 1;
+            reset();
+            bandera = 1;
         } 
-      //  bandera = 0;
+        while (bandera){
+            carrera();
+            player1(); //mantiene al tanto las luces leds
+            player2();
+        }
+        
     }
 }
 
@@ -91,6 +210,6 @@ void setup(void){
     TRISEbits.TRISE2 = 0;  //Led verde
     
     PORTE = 0;
-    
+    //TRISBbits.TRISBO = 1; //entrada del boton 
 
 }
