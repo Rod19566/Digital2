@@ -33,8 +33,10 @@
 //se asignan variables de los puertos para las luces led
 #define LEDr PORTEbits.RE0 
 #define LEDa PORTEbits.RE1 
-#define LEDv PORTEbits.RE2  //los leds
-#define BTNStart PORTBbits.RB0 // botón Start
+#define LEDv PORTEbits.RE2      //los leds
+#define BTNStart PORTBbits.RB0  // botón Start
+#define BTNp1 PORTBbits.RB1     //player1
+#define BTNp2 PORTBbits.RB2     //player 2
 
 
 #define _XTAL_FREQ 8000000 //Para que funcione el delay -crystal-
@@ -66,7 +68,7 @@ void semaforo(void){
     
     LEDa = 0;
     LEDv = 1;
-    __delay_ms(1500); // un rato más largo el verde jiji
+    __delay_ms(500); // un rato más largo el verde jiji
     LEDv = 0; 
 }
 ///////
@@ -91,9 +93,13 @@ void player1(void){
         break;
         case 6: PORTCbits.RC5 = 0 ;  
         PORTCbits.RC6 = 1 ; 
+        break; 
+        case 7: PORTCbits.RC6 = 0 ;  
+        PORTCbits.RC7 = 1 ; 
         break;  
-        case 7: PORTCbits.RC7 = 0 ;  
+        case 8:  
         PORTAbits.RA0 = 1 ;
+        PORTCbits.RC0 = 1 ;
         PORTCbits.RC1 = 1 ;
         PORTCbits.RC2 = 1 ;
         PORTCbits.RC3 = 1 ;
@@ -101,6 +107,8 @@ void player1(void){
         PORTCbits.RC5 = 1 ;
         PORTCbits.RC6 = 1 ;
         PORTCbits.RC7 = 1 ;
+        bandera = 0;
+        __delay_ms(100);
         break;        
     }
 }
@@ -127,15 +135,21 @@ void player2(void){
         case 6: PORTDbits.RD5 = 0 ;  
         PORTDbits.RD6 = 1 ; 
         break;  
-        case 7: PORTDbits.RD7 = 0 ; 
+        case 7: PORTDbits.RD6 = 0 ;  
+        PORTDbits.RD7 = 1 ; 
+        break;  
+        case 8: 
         PORTAbits.RA1 = 1 ;
+        PORTDbits.RD0 = 1 ;
         PORTDbits.RD1 = 1 ;
         PORTDbits.RD2 = 1 ;
         PORTDbits.RD3 = 1 ;
         PORTDbits.RD4 = 1 ;
         PORTDbits.RD5 = 1 ;
         PORTDbits.RD6 = 1 ;
-        PORTDbits.RD7 = 1 ; 
+        PORTDbits.RD7 = 1 ;
+        bandera = 0;
+        __delay_ms(100);
         break;        
     }
 }
@@ -167,15 +181,14 @@ void reset(void){ //resetea el juego
 
 void carrera(void){ //suma al contador
     
-    if (PORTBbits.RB1 == 0 || PORTBbits.RB2 == 0){
-        if (PORTBbits.RB1 == 0 && PORTBbits.RB2 != 0) conta++;
-        else if (PORTBbits.RB1 != 0 && PORTBbits.RB2 == 0) contb++;
-        else { //por si hacen click a los botones en simultáneo
-            conta++;
-            contb++;
-        }
+    if (BTNp1 == 0) {
+        conta++;
+        __delay_ms(95);//antirrebote??
     }
-    if (conta == 7 || contb == 7) bandera = 0; //finaliza la carrera
+    if (BTNp2 == 0) {
+        contb++;
+        __delay_ms(95);
+    }
 }
 
 /////
@@ -184,14 +197,17 @@ void main(void) {
    
     while(1){
         if (BTNStart == 0){
-            semaforo();
             reset();
+            semaforo();
             bandera = 1;
         } 
         while (bandera){
-            carrera();
             player1(); //mantiene al tanto las luces leds
             player2();
+            if (BTNp1 == 0 || BTNp2 == 0){
+            __delay_ms(95);//antirrebote??
+            carrera();
+            }
         }
         
     }
@@ -204,12 +220,34 @@ void setup(void){
     
     ANSEL = 0;
     ANSELH = 0;
+    reset();
     
     TRISEbits.TRISE0 = 0;  //Led rojo
     TRISEbits.TRISE1 = 0;  //Led amarillo
     TRISEbits.TRISE2 = 0;  //Led verde
     
+    TRISCbits.TRISC0 = 0;  
+    TRISCbits.TRISC1 = 0;  
+    TRISCbits.TRISC2 = 0; 
+    TRISCbits.TRISC3 = 0;  
+    TRISCbits.TRISC4 = 0;  
+    TRISCbits.TRISC5 = 0;  
+    TRISCbits.TRISC6 = 0;  
+    TRISCbits.TRISC7 = 0; 
+    
+    TRISDbits.TRISD0 = 0;  
+    TRISDbits.TRISD1 = 0;  
+    TRISDbits.TRISD2 = 0; 
+    TRISDbits.TRISD3 = 0;  
+    TRISDbits.TRISD4 = 0;  
+    TRISDbits.TRISD5 = 0;  
+    TRISDbits.TRISD6 = 0;  
+    TRISDbits.TRISD7 = 0; 
+    
+    TRISAbits.TRISA0 = 0;  
+    TRISAbits.TRISA1 = 0;  
+   
+    
     PORTE = 0;
-    //TRISBbits.TRISBO = 1; //entrada del boton 
 
 }
